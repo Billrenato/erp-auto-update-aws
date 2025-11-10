@@ -72,19 +72,19 @@ SERVIDOR (Python + FastAPI):
 
 erp-auto-update-aws/
 │
-├── server/
-│   ├── app.py                 # API principal (FastAPI/Flask)
-│   ├── versions/              # Versões disponíveis
+├── api/
+│   ├── Dockerfile              # Configuração de build e deploy
+│   ├── main.py/               # API principal (FastAPI/Flask) vai rodar na aws tbm
 │   └── requirements.txt       # Dependências do servidor
 │
-├── client/
-│   ├── client_simulator.py    # Cliente Python
-│   ├── version.txt            # Versão atual instalada
-│   └── build/                 # Executável gerado pelo PyInstaller
+├── storage/
+│   ├── manifest.json    # Cliente Python
+│   ├── v1.0.5.zip       # Arquivo vai ficar no s3 aws
+│                  
 │
-├── Dockerfile                 # Configuração de build e deploy
+├── client_simulator.py        # esse arquivo vai ficar no terminal do cliente      
 ├── docker-compose.yml         # Configuração de container (opcional)
-└── README.md                  # Este arquivo
+└── README.md                  
 
 ===============================================================================
 3. TECNOLOGIAS
