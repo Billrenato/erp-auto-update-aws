@@ -1,0 +1,10 @@
+
+
+services:
+  update_api:
+    build: ./api
+    ports:
+      - "8080:8000"
+    volumes:
+      - ./storage:/storage
+
