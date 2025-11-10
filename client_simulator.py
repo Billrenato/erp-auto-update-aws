@@ -72,5 +72,17 @@ def main():
 
     time.sleep(2)
 
+        # -------------------------------------------------
+    # Após verificar ou atualizar, inicia o sistema Delphi
+    # -------------------------------------------------
+    erp_exe = os.path.join(INSTALL_DIR, "Vnd.exe")
+
+    if os.path.exists(erp_exe):
+        print("▶️ Iniciando o sistema ERP atualizado...")
+        os.startfile(erp_exe)
+    else:
+        print("⚠️ Arquivo ERP não encontrado:", erp_exe)
+
+
 if __name__ == "__main__":
     main()
