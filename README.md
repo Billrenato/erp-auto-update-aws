@@ -1,205 +1,169 @@
-# ERP Auto Update System
+# 🚀 ERP Auto Update System
 
-Sistema de atualização automática para terminais ERP, desenvolvido em Python 3.11 e preparado para rodar via AWS (EC2 + S3).
+Sistema robusto de atualização automática para terminais ERP, desenvolvido em **Python 3.11** e otimizado para **AWS** (EC2 + S3).
 
-O projeto permite que múltiplos terminais atualizem automaticamente seus executáveis (.exe) e 
-arquivos auxiliares através de uma API centralizada, garantindo distribuição eficiente e controle de versões.
+Este projeto garante a distribuição eficiente e centralizada de novos executáveis (`.exe`) e arquivos auxiliares para múltiplos terminais, utilizando uma **API centralizada** para gerenciamento e controle de versões.
+
+---
+
+## 💡 1. Visão Geral do Fluxo de Atualização
+
+O sistema opera com uma arquitetura Cliente-Servidor simples e eficaz para gerenciar o ciclo de vida das atualizações.
+
+### **Cliente (Terminal ERP - Python/Executável)**
+
+1.  **Verificação:** Lê a versão atual instalada (`version.txt`).
+2.  **Consulta:** Comunica-se com a API de atualização para verificar a disponibilidade de uma versão mais recente.
+3.  **Download:** Faz o download do arquivo `.zip` da nova versão (hospedado no S3).
+4.  **Extração:** Extrai automaticamente o conteúdo para o diretório de instalação configurado (Ex: `C:\sistema\bin`).
+5.  **Finalização:** Atualiza o `version.txt` com o novo número de versão e inicia o ERP (`Vnd.exe`) atualizado.
+
+### **Servidor (API Centralizada - Python + FastAPI/Flask)**
+
+* **Tecnologia:** Desenvolvido com **FastAPI** (ou Flask) e empacotado via **Docker**.
+* **Hospedagem:** Executado em uma instância **AWS EC2** (via Docker + Gunicorn/Uvicorn).
+* **Armazenamento:** Arquivos de versão (`.zip` e `manifest.json`) hospedados no **AWS S3 Bucket**.
+* **Endpoints Principais:**
+    * `/check_update`: Informa ao cliente se há uma nova versão disponível.
+    * `/download/{arquivo}`: Fornece o `.zip` da versão solicitada (com redirecionamento para o S3).
+
+---
+
+## 🗂️ 2. Estrutura do Projeto
+
+A organização do repositório é focada em separar a lógica da API, o armazenamento e os utilitários do cliente.
+
+---
+      erp-auto-update-aws/
+      ├── api/
+      │   ├── Dockerfile             # Configuração de build para o container da API
+      │   ├── main.py                # Lógica principal da API (FastAPI/Flask)
+      │   └── requirements.txt       # Dependências do servidor
+      │
+      ├── client/
+      │   └── client_simulator.py    # Script que simula o terminal cliente de atualização
+      │
+      ├── storage/                   # Arquivos de exemplo (que serão movidos para o S3)
+      │   ├── manifest.json          # JSON com a versão mais recente e hashes
+      │   └── v1.0.5.zip             # Arquivo de atualização (ficará no S3)
+      │
+      └── docker-compose.yml         # Configuração de container para desenvolvimento local
+---
+
+---
+
+## 🛠️ 3. Tecnologias Utilizadas
+
+| Categoria | Tecnologia | Uso Principal |
+| :--- | :--- | :--- |
+| **Linguagem** | Python 3.11 | Desenvolvimento do Cliente e Servidor |
+| **Servidor/API** | FastAPI / Flask | Criação dos Endpoints RESTful |
+| **Infraestrutura** | AWS S3, AWS EC2 | Armazenamento de arquivos, Hospedagem da API |
+| **Empacotamento** | PyInstaller | Geração do executável (`.exe`) do cliente |
+| **Deploy** | Docker, Docker Compose | Empacotamento, orquestração e deploy automatizado |
+| **Bibliotecas** | Requests, ZipFile, io | Operações HTTP e manipulação de ZIP |
 
-
-# 1. VISÃO GERAL
-
-
-CLIENTE (Python/EXE):
-- Verifica a versão instalada (version.txt)
-- Consulta a API de atualização
-- Faz download do arquivo .zip da nova versão
-- Extrai automaticamente os arquivos no diretório configurado (C:\sistema\bin)
-- Atualiza o version.txt e inicia o ERP (Vnd.exe)
-
-SERVIDOR (Python + FastAPI):
-- Endpoint /check_update → informa se há nova versão
-- Endpoint /download/{arquivo} → fornece o .zip hospedado no S3
-- Configuração de hospedagem: AWS EC2 (Docker + Gunicorn/Uvicorn)
-- Armazenamento de versões: AWS S3 Bucket
-
-
-
-===============================================================================
-2. ESTRUTURA DO PROJETO
-===============================================================================
-
-erp-auto-update-aws/
-│
-├── api/
-│   ├── Dockerfile              # Configuração de build e deploy
-│   ├── main.py/               # API principal (FastAPI/Flask) vai rodar na aws tbm
-│   └── requirements.txt       # Dependências do servidor
-│
-├── storage/
-│   ├── manifest.json    # Cliente Python
-│   ├── v1.0.5.zip       # Arquivo vai ficar no s3 aws
-│                  
-│
-├── client_simulator.py        # esse arquivo vai ficar no terminal do cliente      
-├── docker-compose.yml         # Configuração de container (opcional)
-└── README.md                  
-
-
-# 3. TECNOLOGIAS
-
-
-- Python 3.11
-- FastAPI ou Flask (para a API)
-- Requests, ZipFile, io
-- AWS S3 (armazenamento das versões)
-- AWS EC2 (execução da API)
-- PyInstaller (geração do executável .exe)
-- Docker (empacotamento e deploy automatizado)
-
-
-# 4. CONFIGURAÇÃO DO CLIENTE
-
-
-1. Configure o diretório de instalação no código:
-   INSTALL_DIR = r"C:\sistema\bin"
-
-2. Gere o executável:
-   pyinstaller --onefile client_simulator.py
-
-3. Copie o executável gerado para os terminais que farão a atualização automática.
-
-
-#5. Deploy na AWS
-1. Criar o bucket S3
-
-Nome sugerido: erp-auto-update-files
-
-Estrutura:
-
-versions/
-  ├── v1.0.1.zip
-  ├── v1.0.2.zip
-  └── manifest.json
-
-2. Subir a API para o EC2
-docker build -t erp-update-server ./api
-docker run -d -p 8080:8000 erp-update-server
-
-3. Endpoints Disponíveis
-
-/check_update?version=1.0.0 → Verifica nova versão
-
-/download/v1.0.1.zip → Baixa a nova versão
-
-/upload_update → Envia nova versão (via formulário)
-
-# 6. Teste Local
-Rodar o servidor
-python api/main.py
-
-Executar o cliente simulador
-python client_simulator.py
-
-# 7. Segurança e Boas Práticas
-
-Utilize hash MD5 ou SHA256 para validar a integridade dos arquivos ZIP.
-
-Configure HTTPS via Nginx ou AWS CloudFront.
-
-Restrinja permissões de gravação no diretório de instalação (C:\piracaiasoft\bin).
-
-Armazene chaves e tokens AWS em variáveis de ambiente.
-
-Gere logs detalhados de atualização (update.log) para auditoria.
-
-===============================================================================
-8. PRÓXIMOS PASSOS
-===============================================================================
-
-1. Configurar e testar:
-   - API rodando na AWS EC2
-   - Arquivos .zip hospedados no S3
-2. Validar atualização em múltiplos terminais
-3. Implementar rollback automático em caso de falha
-4. Adicionar verificação de integridade do executável
-5. Configurar monitoramento com CloudWatch
-
-===============================================================================
-
-# ERP Auto Update - Deploy de Teste na AWS
-
-Este repositório contém o sistema de atualização automática para terminais ERP, rodando em AWS EC2 e usando S3 para hospedar os arquivos de atualização.
-
-
-# Fluxo de atualização
-
-- O terminal ERP (client_simulator.py) lê a versão local (version.txt).
-
-- Consulta a API FastAPI hospedada na EC2:
-
-- GET http://<EC2_PUBLIC_IP>:8080/check_update?version=<versao_atual>
-
-
-- A API verifica o manifest.json no S3:
-
-- Se houver nova versão disponível, retorna a URL do .zip.
-
-- O terminal baixa o .zip e extrai os arquivos na pasta de instalação.
-
-- Atualiza o version.txt para a nova versão.
-
-- Inicia o sistema ERP atualizado automaticamente.
-
-# ⚙ Configuração AWS
-
-- EC2 Instance
-
-- Tipo: t3.micro
-
-- Sistema: Ubuntu 22.04
-
-- Docker + Docker Compose instalados
-
-- S3 Bucket
-
-- Nome: erp-auto-update
-
-- Região: sa-east-1 (São Paulo)
-
-- Bucket policy configurada para permitir leitura pública de objetos.
-
-- AWS CLI
-
-- Configurada com usuário principal com permissão de S3.
-
-# Upload de arquivos de atualização:
-
-aws s3 cp v1.0.6.zip s3://erp-auto-update/v1.0.6.zip
-aws s3 cp manifest.json s3://erp-auto-update/manifest.json
-
-# 🐳 Rodando a API no Docker
-
-Build e start:
-
-sudo docker compose up -d
-
-
-Verificar containers rodando:
-
-sudo docker ps
-
-
-API disponível em:
-
-http://<EC2_PUBLIC_IP>:8080
-
-
-
-# Log do Teste:
-
-Terminal com versão 0.0.0 verificando atualizações...
-Nova versão 1.0.6 disponível! Iniciando atualização...
-Baixando atualização de https://erp-auto-update.s3.sa-east-1.amazonaws.com/v1.0.6.zip ...
-Atualização extraída com sucesso!
-Terminal atualizado para a versão 1.0.6
-Iniciando o sistema ERP atualizado...
+---
+
+## 🖥️ 4. Configuração e Execução do Cliente
+
+Para que o terminal realize a atualização, siga estes passos:
+
+1.  **Defina o Diretório:** No arquivo `client_simulator.py`, configure o caminho de instalação:
+    ```python
+    INSTALL_DIR = r"C:\sistema\bin"
+    ```
+2.  **Gere o Executável:** Utilize o PyInstaller para criar o binário standalone:
+    ```bash
+    pyinstaller --onefile client_simulator.py
+    ```
+3.  **Distribuição:** Copie o executável gerado para os terminais onde a atualização será executada.
+
+### **Teste Local**
+
+1.  **Rodar o Servidor:**
+    ```bash
+    python api/main.py
+    ```
+2.  **Executar o Cliente Simulado:**
+    ```bash
+    python client_simulator.py
+    ```
+
+---
+
+## ☁️ 5. Deploy na AWS e Endpoints
+
+### **5.1. Configuração do S3**
+
+1.  Crie o Bucket S3 (Ex: `erp-auto-update-files`).
+2.  **Estrutura Recomendada:**
+    ```
+    versions/
+    ├── manifest.json
+    ├── v1.0.1.zip
+    └── v1.0.2.zip
+    ```
+3.  **Upload de Arquivos de Versão:** Utilize o AWS CLI:
+    ```bash
+    aws s3 cp v1.0.6.zip s3://erp-auto-update-files/versions/v1.0.6.zip
+    aws s3 cp manifest.json s3://erp-auto-update-files/versions/manifest.json
+    ```
+
+### **5.2. Deploy da API no EC2 (Docker)**
+
+1.  Construa a imagem Docker:
+    ```bash
+    docker build -t erp-update-server ./api
+    ```
+2.  Execute o container:
+    ```bash
+    docker run -d -p 8080:8000 erp-update-server
+    ```
+    *(A porta 8080 é exposta publicamente e mapeada para a porta 8000 do container.)*
+
+### **5.3. Endpoints Disponíveis**
+
+| Método | Endpoint | Descrição |
+| :--- | :--- | :--- |
+| **GET** | `/check_update?version=1.0.0` | Verifica se há uma versão mais recente que a informada. |
+| **GET** | `/download/v1.0.1.zip` | Retorna o arquivo de atualização solicitado. |
+| **POST** | `/upload_update` | Endpoint opcional para envio (upload) de novas versões (via formulário). |
+
+---
+
+## 🔒 6. Segurança e Boas Práticas
+
+Para garantir a integridade e segurança do sistema:
+
+* **Integridade do Arquivo:** Utilize **hash MD5** ou **SHA256** no `manifest.json` para que o cliente valide a integridade do `.zip` após o download.
+* **Criptografia:** Configure **HTTPS** na API, utilizando Nginx como reverse proxy ou o serviço **AWS CloudFront**.
+* **Permissões:** Restrinja as permissões de gravação no diretório de instalação do cliente (Ex: `C:\sistema\bin`).
+* **Credenciais:** Armazene chaves e tokens AWS de forma segura, utilizando **variáveis de ambiente** ou o **AWS Parameter Store/Secrets Manager**.
+* **Auditoria:** Implemente um sistema de log detalhado (`update.log`) para auditoria de cada processo de atualização no terminal.
+
+---
+
+## 🎯 7. Próximos Passos (Roadmap)
+
+1.  **Configuração Completa:** Finalizar a configuração e testes da API rodando na AWS EC2 e arquivos .zip hospedados no S3.
+2.  **Validação:** Testar e validar o fluxo de atualização em um ambiente com múltiplos terminais.
+3.  **Estabilidade:** Implementar o recurso de **rollback automático** em caso de falha na extração ou inicialização pós-atualização.
+4.  **Verificação:** Adicionar checagem de integridade (hash) do executável do ERP após a atualização.
+5.  **Monitoramento:** Configurar alertas e métricas de atualização via **AWS CloudWatch**.
+
+---
+
+## 📄 Log de Teste
+
+Exemplo de saída de log no terminal cliente durante o processo de atualização:
+
+---
+      💻 Terminal com versão 0.0.0 verificando atualizações...
+      🚀 Nova versão 1.0.6 disponível! Iniciando atualização...
+      🔽 Baixando atualização de https://erp-auto-update.s3.sa-east-1.amazonaws.com/v1.0.6.zip ...
+      ✅ Atualização extraída com sucesso!
+      ✅ Terminal atualizado para a versão 1.0.6
+      ▶️ Iniciando o sistema ERP atualizado...
+      PS C:\erp-auto-update-aws> 
+---
