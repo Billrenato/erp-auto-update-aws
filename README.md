@@ -2,7 +2,8 @@
 
 Sistema de atualização automática para terminais ERP, desenvolvido em Python 3.11 e preparado para rodar via AWS (EC2 + S3).
 
-O projeto permite que múltiplos terminais atualizem automaticamente seus executáveis (.exe) e arquivos auxiliares através de uma API centralizada, garantindo distribuição eficiente e controle de versões.
+O projeto permite que múltiplos terminais atualizem automaticamente seus executáveis (.exe) e 
+arquivos auxiliares através de uma API centralizada, garantindo distribuição eficiente e controle de versões.
 
 ===============================================================================
 1. VISÃO GERAL
@@ -20,51 +21,7 @@ SERVIDOR (Python + FastAPI):
 - Endpoint /download/{arquivo} → fornece o .zip hospedado no S3
 - Configuração de hospedagem: AWS EC2 (Docker + Gunicorn/Uvicorn)
 - Armazenamento de versões: AWS S3 Bucket
-
-
-                   ┌──────────────────────────┐
-                   │        Usuário           │
-                   │ (Terminal / Máquina ERP) │
-                   └────────────┬─────────────┘
-                                │
-                                │ Verifica Atualizações
-                                ▼
-                     ┌──────────────────────────┐
-                     │   API de Atualização     │
-                     │ (Python + FastAPI)       │
-                     │       Porta 8080         │
-                     └────────────┬─────────────┘
-                                  │
-                 ┌────────────────┴────────────────┐
-                 │                                 │
-                 ▼                                 ▼
-     ┌─────────────────────┐            ┌──────────────────────────┐
-     │ Endpoint/check_update│           │ Endpoint /download/{zip} │
-     │ Retorna JSON com:   │            │ Fornece arquivo .zip com │
-     │ - Versão atual      │            │ novos binários(até 500MB)│
-     │ - URL de download   │            └──────────────────────────┘
-     │ - Flag de update    │
-     └─────────────────────┘
-                                  │
-                                  ▼
-                   ┌──────────────────────────┐
-                   │        AWS S3 Bucket     │
-                   │  (armazenamento dos ZIPs)│
-                   └────────────┬─────────────┘
-                                │
-                                ▼
-                     ┌──────────────────────────┐
-                     │   Cliente Python (EXE)   │
-                     │ client_simulator.exe     │
-                     │--------------------------│
-                     │ 1. Verifica versão local │
-                     │ 2. Consulta API          │
-                     │ 3. Baixa atualização ZIP │
-                     │ 4. Extrai e substitui    │
-                     │ 5. Inicia Vnd.exe        │
-                     └──────────────────────────┘
-
-
+      
 
 ===============================================================================
 2. ESTRUTURA DO PROJETO
@@ -159,4 +116,124 @@ python client/client_simulator.py
 5. Configurar monitoramento com CloudWatch
 
 ===============================================================================
+
+
+
+#!/bin/bash
+# ============================================================
+# 🚀 ERP AUTO UPDATE - DEPLOY COMPLETO COM FASTAPI, DOCKER E AWS S3
+# ============================================================
+# Script de automação para configurar e publicar o sistema ERP Auto Update
+# Autor: QRtouch
+# Versão: 1.0.0
+
+# ============================================================
+# 1️⃣ ATUALIZAÇÃO DO SISTEMA E INSTALAÇÃO DE DEPENDÊNCIAS
+# ============================================================
+echo -e "${ARROW} ${YELLOW}Atualizando pacotes do sistema...${RESET}"
+sudo apt update -y && sudo apt upgrade -y
+echo -e "${CHECK} Sistema atualizado!"
+
+echo -e "${ARROW} ${YELLOW}Instalando Docker e Docker Compose...${RESET}"
+sudo apt install -y docker.io docker-compose
+sudo systemctl enable docker
+sudo systemctl start docker
+echo -e "${CHECK} Docker instalado e iniciado!"
+
+# ============================================================
+# 2️⃣ CLONAR O REPOSITÓRIO
+# ============================================================
+REPO_URL="https://github.com/<usuario>/erp-auto-update-aws.git"
+echo -e "${ARROW} ${YELLOW}Clonando repositório do GitHub...${RESET}"
+git clone "$REPO_URL" || { echo -e "${ERROR} Falha ao clonar repositório!"; exit 1; }
+cd erp-auto-update-aws || exit
+echo -e "${CHECK} Repositório clonado com sucesso!"
+
+# ============================================================
+# 3️⃣ CONFIGURAR VARIÁVEIS AWS
+# ============================================================
+echo -e "${CLOUD} ${YELLOW}Configurando variáveis de ambiente AWS...${RESET}"
+
+read -p "🪪 AWS_ACCESS_KEY_ID: " AWS_ACCESS_KEY_ID
+read -p "🔑 AWS_SECRET_ACCESS_KEY: " AWS_SECRET_ACCESS_KEY
+
+export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+export AWS_REGION="sa-east-1"
+export S3_BUCKET="erp-auto-update"
+
+echo -e "${CHECK} Variáveis configuradas!"
+
+# ============================================================
+# 4️⃣ ESTRUTURA DO PROJETO
+# ============================================================
+
+cat > api/requirements.txt << 'EOF'
+fastapi
+uvicorn
+boto3
+EOF
+
+cat > api/Dockerfile << 'EOF'
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+EOF
+
+cat > docker-compose.yml << 'EOF'
+services:
+  update_api:
+    build: ./api
+    ports:
+      - "8080:8000"
+    environment:
+      - AWS_REGION=sa-east-1
+      - S3_BUCKET=erp-auto-update
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+EOF
+
+cat > manifest.json << 'EOF'
+{
+  "update": true,
+  "version": "1.0.6",
+  "file": "v1.0.6.zip"
+}
+EOF
+
+echo -e "${CHECK} Estrutura criada!"
+
+# ============================================================
+# 5️⃣ CONSTRUIR E EXECUTAR CONTAINER
+# ============================================================
+echo -e "${DOCKER} ${YELLOW}Construindo imagem Docker e iniciando container...${RESET}"
+sudo docker compose up -d
+echo -e "${CHECK} Container iniciado com sucesso!"
+
+# ============================================================
+# 6️⃣ TESTE DA API
+# ============================================================
+IP=$(curl -s http://checkip.amazonaws.com)
+echo -e "${ARROW} ${YELLOW}Testando API local...${RESET}"
+sleep 5
+curl "http://${IP}:8080/check_update?version=1.0.5"
+
+# ============================================================
+# 7️⃣ LOGS
+# ============================================================
+echo -e "${ARROW} ${YELLOW}Exibindo logs do container...${RESET}"
+sudo docker logs -f erp-auto-update-aws-update_api-1 &
+
+# ============================================================
+# 🎉 FINALIZAÇÃO
+# ============================================================
+echo -e "\n${GREEN}${BOLD}✅ Deploy concluído com sucesso!${RESET}"
+echo -e "${CYAN}API rodando em:${RESET} http://${IP}:8080"
+echo -e "${CYAN}Bucket S3:${RESET} s3://erp-auto-update"
+echo -e "${CYAN}Cliente salvo em:${RESET} client_simulator.py"
+echo -e "\n🎉 O sistema ERP Auto Update está pronto para uso!\n"
+
 
