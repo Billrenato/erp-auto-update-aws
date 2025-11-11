@@ -13,7 +13,7 @@ REGION = os.getenv("AWS_REGION", "sa-east-1")
 s3 = boto3.client("s3", region_name=REGION)
 
 # --------------------------------------------------------
-# 1️⃣ Verificar se há nova versão
+# 1️ Verificar se há nova versão
 # --------------------------------------------------------
 @app.get("/check_update")
 def check_update(version: str):
@@ -42,7 +42,7 @@ def check_update(version: str):
 
 
 # --------------------------------------------------------
-# 2️⃣ Fazer upload de nova versão
+# 2️ Fazer upload de nova versão
 # --------------------------------------------------------
 @app.post("/upload_update")
 async def upload_update(file: UploadFile, version: str = Form(...)):
