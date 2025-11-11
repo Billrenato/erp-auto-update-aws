@@ -4,16 +4,17 @@ import zipfile
 import io
 import time
 
-# Configurações fixas do cliente
-API_URL = "http://localhost:8080/check_update"
-DOWNLOAD_BASE = "http://localhost:8080/download/"
+# -------------------------------------------------
+# Configurações fixas do cliente (ALTERE SOMENTE AQUI)
+# -------------------------------------------------
+API_URL = "http://18.231.226.101:8080/check_update"
+DOWNLOAD_BASE = "https://erp-auto-update.s3.sa-east-1.amazonaws.com/"
 INSTALL_DIR = r"C:\piracaiasoft\bin"
 VERSION_FILE = os.path.join(INSTALL_DIR, "version.txt")
 
 # -------------------------------------------------
 # Funções utilitárias
 # -------------------------------------------------
-
 def get_local_version():
     """Lê a versão atual instalada no terminal"""
     if not os.path.exists(VERSION_FILE):
@@ -46,16 +47,19 @@ def download_and_extract(url, target_dir):
 # -------------------------------------------------
 # Fluxo principal
 # -------------------------------------------------
-
 def main():
     ensure_install_dir()
     current_version = get_local_version()
 
     print(f"💻 Terminal com versão {current_version} verificando atualizações...")
-    r = requests.get(API_URL, params={"version": current_version})
+    try:
+        r = requests.get(API_URL, params={"version": current_version}, timeout=10)
+    except requests.exceptions.RequestException as e:
+        print("❌ Erro ao conectar ao servidor:", e)
+        return
 
     if r.status_code != 200:
-        print("❌ Erro ao conectar ao servidor:", r.status_code)
+        print("❌ Erro HTTP:", r.status_code)
         return
 
     data = r.json()
@@ -72,7 +76,7 @@ def main():
 
     time.sleep(2)
 
-        # -------------------------------------------------
+    # -------------------------------------------------
     # Após verificar ou atualizar, inicia o sistema Delphi
     # -------------------------------------------------
     erp_exe = os.path.join(INSTALL_DIR, "Vnd.exe")
@@ -82,7 +86,6 @@ def main():
         os.startfile(erp_exe)
     else:
         print("⚠️ Arquivo ERP não encontrado:", erp_exe)
-
 
 if __name__ == "__main__":
     main()
