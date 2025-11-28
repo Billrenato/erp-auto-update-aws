@@ -1,4 +1,4 @@
-# 🚀 ERP Auto Update System
+#  ERP Auto Update System
 
 Sistema robusto de atualização automática para terminais ERP, desenvolvido em **Python 3.11** e otimizado para **AWS** (EC2 + S3).
 
@@ -6,7 +6,7 @@ Este projeto garante a distribuição eficiente e centralizada de novos executá
 
 ---
 
-## 💡 1. Visão Geral do Fluxo de Atualização
+##  1. Visão Geral do Fluxo de Atualização
 
 O sistema opera com uma arquitetura Cliente-Servidor simples e eficaz para gerenciar o ciclo de vida das atualizações.
 
@@ -29,7 +29,7 @@ O sistema opera com uma arquitetura Cliente-Servidor simples e eficaz para geren
 
 ---
 
-## 🗂️ 2. Estrutura do Projeto
+##  2. Estrutura do Projeto
 
 A organização do repositório é focada em separar a lógica da API, o armazenamento e os utilitários do cliente.
 
@@ -52,7 +52,7 @@ A organização do repositório é focada em separar a lógica da API, o armazen
 
 ---
 
-## 🛠️ 3. Tecnologias Utilizadas
+##  3. Tecnologias Utilizadas
 
 | Categoria | Tecnologia | Uso Principal |
 | :--- | :--- | :--- |
@@ -65,7 +65,7 @@ A organização do repositório é focada em separar a lógica da API, o armazen
 
 ---
 
-## 🖥️ 4. Configuração e Execução do Cliente
+##  4. Configuração e Execução do Cliente
 
 Para que o terminal realize a atualização, siga estes passos:
 
@@ -132,7 +132,7 @@ Para que o terminal realize a atualização, siga estes passos:
 
 ---
 
-## 🔒 6. Segurança e Boas Práticas
+##  6. Segurança e Boas Práticas
 
 Para garantir a integridade e segurança do sistema:
 
@@ -144,7 +144,7 @@ Para garantir a integridade e segurança do sistema:
 
 ---
 
-## 🎯 7. Próximos Passos (Roadmap)
+##  7. Próximos Passos (Roadmap)
 
 1.  **Configuração Completa:** Finalizar a configuração e testes da API rodando na AWS EC2 e arquivos .zip hospedados no S3.
 2.  **Validação:** Testar e validar o fluxo de atualização em um ambiente com múltiplos terminais.
@@ -159,11 +159,11 @@ Para garantir a integridade e segurança do sistema:
 Exemplo de saída de log no terminal cliente durante o processo de atualização:
 
 ---
-      💻 Terminal com versão 0.0.0 verificando atualizações...
-      🚀 Nova versão 1.0.6 disponível! Iniciando atualização...
-      🔽 Baixando atualização de https://erp-auto-update.s3.sa-east-1.amazonaws.com/v1.0.6.zip ...
-      ✅ Atualização extraída com sucesso!
-      ✅ Terminal atualizado para a versão 1.0.6
-      ▶️ Iniciando o sistema ERP atualizado...
+       Terminal com versão 0.0.0 verificando atualizações...
+       Nova versão 1.0.6 disponível! Iniciando atualização...
+       Baixando atualização de https://erp-auto-update.s3.sa-east-1.amazonaws.com/v1.0.6.zip ...
+       Atualização extraída com sucesso!
+       Terminal atualizado para a versão 1.0.6
+       Iniciando o sistema ERP atualizado...
       PS C:\erp-auto-update-aws> 
 ---
